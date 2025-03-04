@@ -56,3 +56,4 @@ class DelayModel:
             (List[int]): predicted targets.
         """
         return
+    
