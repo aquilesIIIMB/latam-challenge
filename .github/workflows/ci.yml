@@ -20,22 +20,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
-          pip install xgboost==1.5.0
+          pip install -r challenge_MLE/requirements.txt
+          pip install -r challenge_MLE/requirements-test.txt
+          pip install pytest
           
       - name: Run model tests
-        run: make model-test
+        run: make -f challenge_MLE/Makefile model-test
         
       - name: Run API tests
-        run: make api-test
+        run: make -f challenge_MLE/Makefile api-test
         
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: reports/
+          path: challenge_MLE/reports/
         if: always()  # Upload test reports even if tests fail
 
   lint:
