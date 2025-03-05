@@ -45,9 +45,9 @@ In addition, the DS considered relevant the creation of the following columns:
 1. Create a repository in **github** and copy all the challenge content into it. Remember that the repository must be **public**.
 
 2. Use the **main** branch for any official release that we should review. It is highly recommended to use [GitFlow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) development practices. **NOTE: do not delete your development branches.**
-   
+
 3. Please, do not change the structure of the challenge (names of folders and files).
-   
+
 4. All the documentation and explanations that you have to give us must go in the `challenge.md` file inside `docs` folder.
 
 5. To send your challenge, you must do a `POST` request to:
@@ -70,7 +70,6 @@ In addition, the DS considered relevant the creation of the following columns:
       "detail": "your request was received"
     }
     ```
-
 
 ***NOTE: We recommend to send the challenge even if you didn't manage to finish all the parts.***
 
@@ -100,7 +99,7 @@ Deploy the model in an `API` with `FastAPI` using the `api.py` file.
 
 - The `API` should pass the tests by running `make api-test`.
 
-> **Note:** 
+> **Note:**
 > - **You cannot** use other framework.
 
 ### Part III
@@ -110,7 +109,7 @@ Deploy the `API` in your favorite cloud provider (we recomend to use GCP).
 - Put the `API`'s url in the `Makefile` (`line 26`).
 - The `API` should pass the tests by running `make stress-test`.
 
-> **Note:** 
+> **Note:**
 > - **It is important that the API is deployed until we review the tests.**
 
 ### Part IV

@@ -10,25 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set up Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v0'
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
-      
+
       - name: Build and Push Docker image
         run: |
           # Configure Docker to use gcloud as a credential helper
           gcloud auth configure-docker
-          
+
           # Build the Docker image
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/flight-delay-api:${{ github.sha }} .
-          
+
           # Push the Docker image to Google Container Registry
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/flight-delay-api:${{ github.sha }}
-      
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy flight-delay-api \
@@ -40,13 +40,13 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 10
-      
+
       - name: Get service URL
         run: |
           SERVICE_URL=$(gcloud run services describe flight-delay-api --platform managed --region us-central1 --format='value(status.url)')
           echo "Deployed service URL: $SERVICE_URL"
           # Update the Makefile with the service URL for stress tests
           sed -i "s|STRESS_URL = .*|STRESS_URL = ${SERVICE_URL}|g" Makefile
-      
+
       - name: Run stress tests
         run: make stress-test

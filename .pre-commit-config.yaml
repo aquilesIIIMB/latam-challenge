@@ -1,0 +1,87 @@
+# ------------------------------------------------------------------------------
+# Archivo: .pre-commit-config.yaml
+# Descripción: Configuración de pre-commit con mejoras sugeridas
+# ------------------------------------------------------------------------------
+
+default_language_version:
+  # Ajusta la versión a la que tengas instalada.
+  # Si cuentas con Python 3.10, podrías usar:
+  #   python: python3.10
+  python: python3.9
+
+repos:
+  # ----------------------------------------------------------------------------
+  # Repositorio oficial de hooks por default (pre-commit-hooks).
+  # Se ha actualizado la versión (rev) para reducir warnings y usar la más reciente.
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    # Usa la versión más reciente posible o la que desees fijar.
+    # Puedes actualizar con 'pre-commit autoupdate'.
+    rev: v5.0.0
+    hooks:
+      # Revisa que no se suban archivos grandes.
+      - id: check-added-large-files
+
+      # Chequea conflictos de mayúsculas/minúsculas en nombres de archivos.
+      - id: check-case-conflict
+
+      # Detecta si se suben llaves privadas.
+      - id: detect-private-key
+
+      # Elimina espacios en blanco al final de las líneas.
+      - id: trailing-whitespace
+
+      # Asegura que exista una sola línea en blanco al final de cada archivo.
+      - id: end-of-file-fixer
+
+      # Valida la sintaxis de archivos JSON.
+      - id: check-json
+
+      # Valida la sintaxis de archivos YAML.
+      - id: check-yaml
+
+      # Valida la sintaxis de archivos TOML.
+      - id: check-toml
+
+  # ----------------------------------------------------------------------------
+  # Hooks para notebooks de Jupyter: nbstripout limpia metadata innecesaria.
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  # ----------------------------------------------------------------------------
+  # Black para formatear Python (incluye black-jupyter para notebooks).
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black-jupyter
+        args: [--safe]
+        language_version: python3.9  # Ajustar a la versión instalada.
+
+  # ----------------------------------------------------------------------------
+  # isort para ordenar imports en Python.
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: [--profile, black]
+
+  # ----------------------------------------------------------------------------
+  # Ruff para análisis de linting en Python, alternativa ligera a flake8.
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
+    hooks:
+      - id: ruff
+
+# ------------------------------------------------------------------------------
+# Excluye archivos o rutas específicas de la ejecución de hooks.
+# En este caso, se ignora la carpeta "legacy/" y su contenido.
+# Ajusta según tu estructura de proyecto.
+# ------------------------------------------------------------------------------
+exclude: "legacy/.*"
