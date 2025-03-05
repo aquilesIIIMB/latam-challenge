@@ -25,10 +25,10 @@ jobs:
           pip install pytest
           
       - name: Run model tests
-        run: make -f Makefile model-test
+        run: make model-test
         
       - name: Run API tests
-        run: make -f Makefile api-test
+        run: make api-test
         
       - name: Upload test reports
         uses: actions/upload-artifact@v4
