@@ -20,15 +20,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r challenge_MLE/requirements.txt
-          pip install -r challenge_MLE/requirements-test.txt
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
           pip install pytest
           
       - name: Run model tests
-        run: make -f challenge_MLE/Makefile model-test
+        run: make -f Makefile model-test
         
       - name: Run API tests
-        run: make -f challenge_MLE/Makefile api-test
+        run: make -f Makefile api-test
         
       - name: Upload test reports
         uses: actions/upload-artifact@v4
