@@ -5,7 +5,7 @@
         self.model = DelayModel()
 &gt;       self.data = pd.read_csv(filepath_or_buffer="../data/data.csv")
 
-tests/model/test_model.py:31: 
+tests/model/test_model.py:31:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ../../../../miniconda3/envs/latam-challenge/lib/python3.9/site-packages/pandas/util/_decorators.py:311: in wrapper
     return func(*args, **kwargs)
@@ -37,7 +37,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
     ) -&gt; IOHandles:
         """
         Get file handle for given path/buffer and mode.
-    
+
         Parameters
         ----------
         path_or_buf : str or file handle
@@ -55,18 +55,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             no compression). If dict and compression mode is one of
             {'zip', 'gzip', 'bz2'}, or inferred as one of the above,
             other entries passed as additional compression options.
-    
+
             .. versionchanged:: 1.0.0
-    
+
                May now be a dict with key 'method' as compression mode
                and other keys as compression options if compression
                mode is 'zip'.
-    
+
             .. versionchanged:: 1.1.0
-    
+
                Passing compression options as keys in dict is now
                supported for compression modes 'gzip' and 'bz2' as well as 'zip'.
-    
+
         memory_map : bool, default False
             See parsers._parser_params for more information.
         is_text : bool, default True
@@ -79,18 +79,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             of options.
         storage_options: StorageOptions = None
             Passed to _get_filepath_or_buffer
-    
+
         .. versionchanged:: 1.2.0
-    
+
         Returns the dataclass IOHandles
         """
         # Windows does not default to utf-8. Set to utf-8 for a consistent behavior
         encoding = encoding or "utf-8"
-    
+
         # read_csv does not know whether the buffer is opened in binary/text mode
         if _is_binary_mode(path_or_buf, mode) and "b" not in mode:
             mode += "b"
-    
+
         # valdiate errors
         if isinstance(errors, str):
             errors = errors.lower()
@@ -110,7 +110,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                 + "https://docs.python.org/3/library/codecs.html#error-handlers "
                 + "for valid values."
             )
-    
+
         # open URLs
         ioargs = _get_filepath_or_buffer(
             path_or_buf,
@@ -119,10 +119,10 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             mode=mode,
             storage_options=storage_options,
         )
-    
+
         handle = ioargs.filepath_or_buffer
         handles: list[Buffer]
-    
+
         # memory mapping needs to be the first step
         handle, memory_map, handles = _maybe_memory_map(
             handle,
@@ -132,15 +132,15 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             errors,
             ioargs.compression["method"] not in _compression_to_extension,
         )
-    
+
         is_path = isinstance(handle, str)
         compression_args = dict(ioargs.compression)
         compression = compression_args.pop("method")
-    
+
         if compression:
             # compression libraries do not like an explicit text-mode
             ioargs.mode = ioargs.mode.replace("t", "")
-    
+
             # GZ Compression
             if compression == "gzip":
                 if is_path:
@@ -159,7 +159,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                         mode=ioargs.mode,
                         **compression_args,
                     )
-    
+
             # BZ Compression
             elif compression == "bz2":
                 handle = bz2.BZ2File(
@@ -171,7 +171,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                     mode=ioargs.mode,
                     **compression_args,
                 )
-    
+
             # ZIP Compression
             elif compression == "zip":
                 handle = _BytesZipFile(handle, ioargs.mode, **compression_args)
@@ -187,19 +187,19 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                             "Multiple files found in ZIP file. "
                             f"Only one file per ZIP: {zip_names}"
                         )
-    
+
             # XZ Compression
             elif compression == "xz":
                 handle = get_lzma_file(lzma)(handle, ioargs.mode)
-    
+
             # Unrecognized Compression
             else:
                 msg = f"Unrecognized compression type: {compression}"
                 raise ValueError(msg)
-    
+
             assert not isinstance(handle, str)
             handles.append(handle)
-    
+
         elif isinstance(handle, str):
             # Check whether the filename is to be opened in binary mode.
             # Binary mode does not support 'encoding' and 'newline'.
@@ -221,7 +221,7 @@ E               FileNotFoundError: [Errno 2] No such file or directory: '../data
         self.model = DelayModel()
 &gt;       self.data = pd.read_csv(filepath_or_buffer="../data/data.csv")
 
-tests/model/test_model.py:31: 
+tests/model/test_model.py:31:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ../../../../miniconda3/envs/latam-challenge/lib/python3.9/site-packages/pandas/util/_decorators.py:311: in wrapper
     return func(*args, **kwargs)
@@ -253,7 +253,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
     ) -&gt; IOHandles:
         """
         Get file handle for given path/buffer and mode.
-    
+
         Parameters
         ----------
         path_or_buf : str or file handle
@@ -271,18 +271,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             no compression). If dict and compression mode is one of
             {'zip', 'gzip', 'bz2'}, or inferred as one of the above,
             other entries passed as additional compression options.
-    
+
             .. versionchanged:: 1.0.0
-    
+
                May now be a dict with key 'method' as compression mode
                and other keys as compression options if compression
                mode is 'zip'.
-    
+
             .. versionchanged:: 1.1.0
-    
+
                Passing compression options as keys in dict is now
                supported for compression modes 'gzip' and 'bz2' as well as 'zip'.
-    
+
         memory_map : bool, default False
             See parsers._parser_params for more information.
         is_text : bool, default True
@@ -295,18 +295,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             of options.
         storage_options: StorageOptions = None
             Passed to _get_filepath_or_buffer
-    
+
         .. versionchanged:: 1.2.0
-    
+
         Returns the dataclass IOHandles
         """
         # Windows does not default to utf-8. Set to utf-8 for a consistent behavior
         encoding = encoding or "utf-8"
-    
+
         # read_csv does not know whether the buffer is opened in binary/text mode
         if _is_binary_mode(path_or_buf, mode) and "b" not in mode:
             mode += "b"
-    
+
         # valdiate errors
         if isinstance(errors, str):
             errors = errors.lower()
@@ -326,7 +326,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                 + "https://docs.python.org/3/library/codecs.html#error-handlers "
                 + "for valid values."
             )
-    
+
         # open URLs
         ioargs = _get_filepath_or_buffer(
             path_or_buf,
@@ -335,10 +335,10 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             mode=mode,
             storage_options=storage_options,
         )
-    
+
         handle = ioargs.filepath_or_buffer
         handles: list[Buffer]
-    
+
         # memory mapping needs to be the first step
         handle, memory_map, handles = _maybe_memory_map(
             handle,
@@ -348,15 +348,15 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             errors,
             ioargs.compression["method"] not in _compression_to_extension,
         )
-    
+
         is_path = isinstance(handle, str)
         compression_args = dict(ioargs.compression)
         compression = compression_args.pop("method")
-    
+
         if compression:
             # compression libraries do not like an explicit text-mode
             ioargs.mode = ioargs.mode.replace("t", "")
-    
+
             # GZ Compression
             if compression == "gzip":
                 if is_path:
@@ -375,7 +375,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                         mode=ioargs.mode,
                         **compression_args,
                     )
-    
+
             # BZ Compression
             elif compression == "bz2":
                 handle = bz2.BZ2File(
@@ -387,7 +387,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                     mode=ioargs.mode,
                     **compression_args,
                 )
-    
+
             # ZIP Compression
             elif compression == "zip":
                 handle = _BytesZipFile(handle, ioargs.mode, **compression_args)
@@ -403,19 +403,19 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                             "Multiple files found in ZIP file. "
                             f"Only one file per ZIP: {zip_names}"
                         )
-    
+
             # XZ Compression
             elif compression == "xz":
                 handle = get_lzma_file(lzma)(handle, ioargs.mode)
-    
+
             # Unrecognized Compression
             else:
                 msg = f"Unrecognized compression type: {compression}"
                 raise ValueError(msg)
-    
+
             assert not isinstance(handle, str)
             handles.append(handle)
-    
+
         elif isinstance(handle, str):
             # Check whether the filename is to be opened in binary mode.
             # Binary mode does not support 'encoding' and 'newline'.
@@ -437,7 +437,7 @@ E               FileNotFoundError: [Errno 2] No such file or directory: '../data
         self.model = DelayModel()
 &gt;       self.data = pd.read_csv(filepath_or_buffer="../data/data.csv")
 
-tests/model/test_model.py:31: 
+tests/model/test_model.py:31:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ../../../../miniconda3/envs/latam-challenge/lib/python3.9/site-packages/pandas/util/_decorators.py:311: in wrapper
     return func(*args, **kwargs)
@@ -469,7 +469,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
     ) -&gt; IOHandles:
         """
         Get file handle for given path/buffer and mode.
-    
+
         Parameters
         ----------
         path_or_buf : str or file handle
@@ -487,18 +487,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             no compression). If dict and compression mode is one of
             {'zip', 'gzip', 'bz2'}, or inferred as one of the above,
             other entries passed as additional compression options.
-    
+
             .. versionchanged:: 1.0.0
-    
+
                May now be a dict with key 'method' as compression mode
                and other keys as compression options if compression
                mode is 'zip'.
-    
+
             .. versionchanged:: 1.1.0
-    
+
                Passing compression options as keys in dict is now
                supported for compression modes 'gzip' and 'bz2' as well as 'zip'.
-    
+
         memory_map : bool, default False
             See parsers._parser_params for more information.
         is_text : bool, default True
@@ -511,18 +511,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             of options.
         storage_options: StorageOptions = None
             Passed to _get_filepath_or_buffer
-    
+
         .. versionchanged:: 1.2.0
-    
+
         Returns the dataclass IOHandles
         """
         # Windows does not default to utf-8. Set to utf-8 for a consistent behavior
         encoding = encoding or "utf-8"
-    
+
         # read_csv does not know whether the buffer is opened in binary/text mode
         if _is_binary_mode(path_or_buf, mode) and "b" not in mode:
             mode += "b"
-    
+
         # valdiate errors
         if isinstance(errors, str):
             errors = errors.lower()
@@ -542,7 +542,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                 + "https://docs.python.org/3/library/codecs.html#error-handlers "
                 + "for valid values."
             )
-    
+
         # open URLs
         ioargs = _get_filepath_or_buffer(
             path_or_buf,
@@ -551,10 +551,10 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             mode=mode,
             storage_options=storage_options,
         )
-    
+
         handle = ioargs.filepath_or_buffer
         handles: list[Buffer]
-    
+
         # memory mapping needs to be the first step
         handle, memory_map, handles = _maybe_memory_map(
             handle,
@@ -564,15 +564,15 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             errors,
             ioargs.compression["method"] not in _compression_to_extension,
         )
-    
+
         is_path = isinstance(handle, str)
         compression_args = dict(ioargs.compression)
         compression = compression_args.pop("method")
-    
+
         if compression:
             # compression libraries do not like an explicit text-mode
             ioargs.mode = ioargs.mode.replace("t", "")
-    
+
             # GZ Compression
             if compression == "gzip":
                 if is_path:
@@ -591,7 +591,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                         mode=ioargs.mode,
                         **compression_args,
                     )
-    
+
             # BZ Compression
             elif compression == "bz2":
                 handle = bz2.BZ2File(
@@ -603,7 +603,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                     mode=ioargs.mode,
                     **compression_args,
                 )
-    
+
             # ZIP Compression
             elif compression == "zip":
                 handle = _BytesZipFile(handle, ioargs.mode, **compression_args)
@@ -619,19 +619,19 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                             "Multiple files found in ZIP file. "
                             f"Only one file per ZIP: {zip_names}"
                         )
-    
+
             # XZ Compression
             elif compression == "xz":
                 handle = get_lzma_file(lzma)(handle, ioargs.mode)
-    
+
             # Unrecognized Compression
             else:
                 msg = f"Unrecognized compression type: {compression}"
                 raise ValueError(msg)
-    
+
             assert not isinstance(handle, str)
             handles.append(handle)
-    
+
         elif isinstance(handle, str):
             # Check whether the filename is to be opened in binary mode.
             # Binary mode does not support 'encoding' and 'newline'.
@@ -653,7 +653,7 @@ E               FileNotFoundError: [Errno 2] No such file or directory: '../data
         self.model = DelayModel()
 &gt;       self.data = pd.read_csv(filepath_or_buffer="../data/data.csv")
 
-tests/model/test_model.py:31: 
+tests/model/test_model.py:31:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 ../../../../miniconda3/envs/latam-challenge/lib/python3.9/site-packages/pandas/util/_decorators.py:311: in wrapper
     return func(*args, **kwargs)
@@ -685,7 +685,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
     ) -&gt; IOHandles:
         """
         Get file handle for given path/buffer and mode.
-    
+
         Parameters
         ----------
         path_or_buf : str or file handle
@@ -703,18 +703,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             no compression). If dict and compression mode is one of
             {'zip', 'gzip', 'bz2'}, or inferred as one of the above,
             other entries passed as additional compression options.
-    
+
             .. versionchanged:: 1.0.0
-    
+
                May now be a dict with key 'method' as compression mode
                and other keys as compression options if compression
                mode is 'zip'.
-    
+
             .. versionchanged:: 1.1.0
-    
+
                Passing compression options as keys in dict is now
                supported for compression modes 'gzip' and 'bz2' as well as 'zip'.
-    
+
         memory_map : bool, default False
             See parsers._parser_params for more information.
         is_text : bool, default True
@@ -727,18 +727,18 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             of options.
         storage_options: StorageOptions = None
             Passed to _get_filepath_or_buffer
-    
+
         .. versionchanged:: 1.2.0
-    
+
         Returns the dataclass IOHandles
         """
         # Windows does not default to utf-8. Set to utf-8 for a consistent behavior
         encoding = encoding or "utf-8"
-    
+
         # read_csv does not know whether the buffer is opened in binary/text mode
         if _is_binary_mode(path_or_buf, mode) and "b" not in mode:
             mode += "b"
-    
+
         # valdiate errors
         if isinstance(errors, str):
             errors = errors.lower()
@@ -758,7 +758,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                 + "https://docs.python.org/3/library/codecs.html#error-handlers "
                 + "for valid values."
             )
-    
+
         # open URLs
         ioargs = _get_filepath_or_buffer(
             path_or_buf,
@@ -767,10 +767,10 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             mode=mode,
             storage_options=storage_options,
         )
-    
+
         handle = ioargs.filepath_or_buffer
         handles: list[Buffer]
-    
+
         # memory mapping needs to be the first step
         handle, memory_map, handles = _maybe_memory_map(
             handle,
@@ -780,15 +780,15 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
             errors,
             ioargs.compression["method"] not in _compression_to_extension,
         )
-    
+
         is_path = isinstance(handle, str)
         compression_args = dict(ioargs.compression)
         compression = compression_args.pop("method")
-    
+
         if compression:
             # compression libraries do not like an explicit text-mode
             ioargs.mode = ioargs.mode.replace("t", "")
-    
+
             # GZ Compression
             if compression == "gzip":
                 if is_path:
@@ -807,7 +807,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                         mode=ioargs.mode,
                         **compression_args,
                     )
-    
+
             # BZ Compression
             elif compression == "bz2":
                 handle = bz2.BZ2File(
@@ -819,7 +819,7 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                     mode=ioargs.mode,
                     **compression_args,
                 )
-    
+
             # ZIP Compression
             elif compression == "zip":
                 handle = _BytesZipFile(handle, ioargs.mode, **compression_args)
@@ -835,19 +835,19 @@ path_or_buf = '../data/data.csv', mode = 'r', encoding = 'utf-8', compression = 
                             "Multiple files found in ZIP file. "
                             f"Only one file per ZIP: {zip_names}"
                         )
-    
+
             # XZ Compression
             elif compression == "xz":
                 handle = get_lzma_file(lzma)(handle, ioargs.mode)
-    
+
             # Unrecognized Compression
             else:
                 msg = f"Unrecognized compression type: {compression}"
                 raise ValueError(msg)
-    
+
             assert not isinstance(handle, str)
             handles.append(handle)
-    
+
         elif isinstance(handle, str):
             # Check whether the filename is to be opened in binary mode.
             # Binary mode does not support 'encoding' and 'newline'.
