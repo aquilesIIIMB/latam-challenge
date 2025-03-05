@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: challenge_MLE/reports/
+          path: reports/
         if: always()  # Upload test reports even if tests fail
 
   lint:
