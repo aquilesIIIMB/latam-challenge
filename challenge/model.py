@@ -250,13 +250,37 @@ class DelayModel:
 
         Returns:
             List[int]: Predicted binary classes (1=delayed, 0=on time).
+
+        Raises:
+            ValueError: If the model cannot be loaded or is not available.
         """
         logger.info("Starting prediction process.")
         try:
             # Ensure model is loaded
             if self._model is None:
                 logger.warning("Model is not loaded; attempting to load from disk.")
-                self.load_booster_from_json(self.JSON_MODEL_PATH)
+                try:
+                    self.load_booster_from_json(self.JSON_MODEL_PATH)
+
+                    # Verify model was successfully loaded
+                    if self._model is None:
+                        raise ValueError(
+                            "Failed to load model from disk. Please ensure the model file exists and is valid."
+                        )
+                except FileNotFoundError as fnf:
+                    logger.error(f"Model file not found: {fnf}")
+                    raise ValueError(
+                        f"Model file not found at '{self.JSON_MODEL_PATH}'. Please train the model first."
+                    ) from fnf
+                except Exception as e:
+                    logger.error(f"Error loading model: {e}")
+                    raise ValueError(f"Error loading model: {e}") from e
+
+            # Align columns - verify feature columns exist
+            if not self._feature_cols:
+                raise ValueError(
+                    "Feature column list is empty. Model metadata may be corrupted."
+                )
 
             # Align columns
             aligned_features = features.reindex(
