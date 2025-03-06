@@ -105,5 +105,6 @@ exclude: |
     \.git|
     \.github|
     __pycache__|
-    model\.json
+    model\.json|
+    model.json.metadata
   )
