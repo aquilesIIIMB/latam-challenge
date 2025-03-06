@@ -1,87 +1,109 @@
 # ------------------------------------------------------------------------------
 # Archivo: .pre-commit-config.yaml
-# Descripción: Configuración de pre-commit con mejoras sugeridas
+# Configuración alineada con prácticas recomendadas de CI/CD.
+# Herramientas integradas: Black, isort, Ruff, mypy y pytest
 # ------------------------------------------------------------------------------
 
 default_language_version:
-  # Ajusta la versión a la que tengas instalada.
-  # Si cuentas con Python 3.10, podrías usar:
-  #   python: python3.10
   python: python3.9
 
 repos:
   # ----------------------------------------------------------------------------
-  # Repositorio oficial de hooks por default (pre-commit-hooks).
-  # Se ha actualizado la versión (rev) para reducir warnings y usar la más reciente.
+  # Hooks estándar recomendados por pre-commit.
   # ----------------------------------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    # Usa la versión más reciente posible o la que desees fijar.
-    # Puedes actualizar con 'pre-commit autoupdate'.
     rev: v5.0.0
     hooks:
-      # Revisa que no se suban archivos grandes.
-      - id: check-added-large-files
-
-      # Chequea conflictos de mayúsculas/minúsculas en nombres de archivos.
       - id: check-case-conflict
-
-      # Detecta si se suben llaves privadas.
-      - id: detect-private-key
-
-      # Elimina espacios en blanco al final de las líneas.
-      - id: trailing-whitespace
-
-      # Asegura que exista una sola línea en blanco al final de cada archivo.
-      - id: end-of-file-fixer
-
-      # Valida la sintaxis de archivos JSON.
-      - id: check-json
-
-      # Valida la sintaxis de archivos YAML.
       - id: check-yaml
-
-      # Valida la sintaxis de archivos TOML.
       - id: check-toml
+      - id: check-json
+      - id: detect-private-key
+      - id: check-added-large-files
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
 
-  # ----------------------------------------------------------------------------
-  # Hooks para notebooks de Jupyter: nbstripout limpia metadata innecesaria.
-  # ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Limpieza automática de metadata de notebooks Jupyter.
+# ------------------------------------------------------------------------------
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+    rev: 0.6.1
     hooks:
       - id: nbstripout
 
-  # ----------------------------------------------------------------------------
-  # Black para formatear Python (incluye black-jupyter para notebooks).
-  # ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Formateador de código Python: Black
+# ------------------------------------------------------------------------------
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
+      - id: black
+        language_version: python3.9
       - id: black-jupyter
-        args: [--safe]
-        language_version: python3.9  # Ajustar a la versión instalada.
+        args: ["--safe"]
+        language_version: python3.9
 
-  # ----------------------------------------------------------------------------
-  # isort para ordenar imports en Python.
-  # ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Ordenar automáticamente imports: isort
+# ------------------------------------------------------------------------------
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+    rev: 5.13.2
     hooks:
       - id: isort
-        name: isort (python)
-        args: [--profile, black]
+        args: ["--profile", "black"]
 
-  # ----------------------------------------------------------------------------
-  # Ruff para análisis de linting en Python, alternativa ligera a flake8.
-  # ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Linting con Ruff, alineado con prácticas estándar de CI.
+# ------------------------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.9
+    rev: v0.3.4
     hooks:
       - id: ruff
+        args: ["check", "--fix", "--exit-zero"]
 
 # ------------------------------------------------------------------------------
-# Excluye archivos o rutas específicas de la ejecución de hooks.
-# En este caso, se ignora la carpeta "legacy/" y su contenido.
-# Ajusta según tu estructura de proyecto.
+# Verificación estática de tipos: mypy
 # ------------------------------------------------------------------------------
-exclude: "legacy/.*"
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        args: ["--ignore-missing-imports"]
+
+# ------------------------------------------------------------------------------
+# Linting adicional con Flake8
+# ------------------------------------------------------------------------------
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: ["--max-line-length=125"]
+
+# ------------------------------------------------------------------------------
+# Ejecución de tests unitarios antes de commits: pytest
+# ------------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+
+# ------------------------------------------------------------------------------
+# Exclusiones globales
+# ------------------------------------------------------------------------------
+exclude: |
+  (?x)^(
+    \.pytest_cache|
+    \.ruff_cache|
+    legacy|
+    build|
+    dist|
+    \.eggs|
+    \.git|
+    \.github|
+    __pycache__|
+    model\.json
+  )

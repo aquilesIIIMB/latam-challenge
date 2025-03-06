@@ -1,6 +1,7 @@
 import logging
+import os
 from datetime import datetime
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import joblib
 import numpy as np
@@ -9,7 +10,9 @@ import xgboost as xgb
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
-# Configure logging
+# ---------------------------------------------------------------------
+# Configure Logging
+# ---------------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -18,19 +21,28 @@ logger = logging.getLogger(__name__)
 
 class DelayModel:
     """
-    A model to predict flight delays using XGBoost classifier.
+    A model to predict flight delays using an XGBoost classifier.
 
     This model preprocesses flight data, trains an XGBoost classifier with
     class balancing, and predicts whether flights will be delayed.
+
+    Attributes:
+        JSON_MODEL_PATH (str): File path for saving/loading the booster in JSON format.
+        _model (xgb.XGBClassifier): Underlying XGBoost classifier instance.
+        _feature_cols (List[str]): List of feature names used by the model.
+        _top_features (List[str]): A set of columns considered most relevant based on feature importance analysis.
     """
 
-    MODEL_PATH = "model.joblib"
+    JSON_MODEL_PATH = "model.json"  # Booster en formato JSON (portátil)
 
     def __init__(self):
-        """Initialize the model with default attributes."""
-        self._model = None  # Model will be saved in this attribute
-        self._feature_cols = []
-        # Top 10 features based on feature importance analysis
+        """
+        Initialize the model with default attributes.
+        """
+        self._model: Optional[xgb.XGBClassifier] = None
+        self._feature_cols: List[str] = []
+
+        # Top 10 features based on previous feature-importance analysis (example)
         self._top_features = [
             "OPERA_Latin American Wings",
             "MES_7",
@@ -43,43 +55,36 @@ class DelayModel:
             "OPERA_Sky Airline",
             "OPERA_Copa Air",
         ]
-        logger.info("DelayModel initialized with top 10 features")
+        logger.info("DelayModel initialized with top 10 features.")
 
+    # -----------------------------------------------------------------
+    # Preprocessing
+    # -----------------------------------------------------------------
     def preprocess(
-        self, data: pd.DataFrame, target_column: str = None
+        self, data: pd.DataFrame, target_column: Optional[str] = None
     ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
         """
         Prepare raw data for training or prediction.
 
+        If `target_column` is provided, returns (features, target).
+        Otherwise, returns only features.
+
         Args:
-            data (pd.DataFrame): Raw data to preprocess.
-            target_column (str, optional): If set, the target is returned.
+            data (pd.DataFrame): Raw data to preprocess, containing
+                'OPERA', 'TIPOVUELO', 'MES', 'Fecha-O', 'Fecha-I', etc.
+            target_column (str, optional): Name of the target column in `data`.
+                If provided, the returned tuple includes the target.
 
         Returns:
             Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
-                Features and target (if target_column is provided),
-                or just features.
+                - If `target_column` is given: (features, target)
+                - Else: features
         """
-        logger.info("Starting data preprocessing")
-
+        logger.info("Starting data preprocessing.")
         try:
-
-            def get_min_diff(data):
-                fecha_o = datetime.strptime(data["Fecha-O"], "%Y-%m-%d %H:%M:%S")
-                fecha_i = datetime.strptime(data["Fecha-I"], "%Y-%m-%d %H:%M:%S")
-                min_diff = ((fecha_o - fecha_i).total_seconds()) / 60
-                return min_diff
-
             df_data = data.copy()
 
-            df_data["min_diff"] = df_data.apply(get_min_diff, axis=1)
-
-            threshold_in_minutes = 15
-            df_data["delay"] = np.where(
-                df_data["min_diff"] > threshold_in_minutes, 1, 0
-            )
-
-            # Create features using one-hot encoding for categorical variables
+            # One-hot encoding for categorical variables
             features = pd.concat(
                 [
                     pd.get_dummies(df_data["OPERA"], prefix="OPERA"),
@@ -89,117 +94,153 @@ class DelayModel:
                 axis=1,
             )
 
-            logger.info(
-                f"Created {features.shape[1]} features through one-hot encoding"
-            )
+            logger.info(f"Created {features.shape[1]} features via one-hot encoding.")
 
-            # Ensure all top features are present (fill with zeros if missing)
+            # Ensure all top features exist (create columns of 0 if missing)
             for feature in self._top_features:
                 if feature not in features.columns:
                     features[feature] = 0
-                    logger.info(f"Added missing feature column: {feature}")
+                    logger.debug(f"Added missing feature column: {feature}")
 
-            # Select only the top features for the model
+            # Select only the top features for model input
             features = features[self._top_features]
-            logger.info(f"Selected {features.shape[1]} top features for model")
+            logger.info(f"Selected {features.shape[1]} top features for the model.")
 
-            # If target column is provided, return features and target
             if target_column is not None:
-                if target_column in df_data.columns:
-                    # Prepare target as a DataFrame with delay column
-                    target = pd.DataFrame(df_data[target_column]).copy()
-                    logger.info(f"Target column '{target_column}' prepared")
-                    return features, target
+                # Example: create a binary delay variable using 'Fecha-O' and 'Fecha-I'
+                if "Fecha-O" in df_data.columns and "Fecha-I" in df_data.columns:
+                    df_data["min_diff"] = df_data.apply(self._compute_time_diff, axis=1)
+
+                    # If flight starts 15 min or more after scheduled time => delayed
+                    threshold_in_minutes = 15
+                    df_data["delay"] = np.where(
+                        df_data["min_diff"] > threshold_in_minutes, 1, 0
+                    )
                 else:
-                    logger.error(f"Target column '{target_column}' not found in data")
-                    raise ValueError(
-                        f"Target column '{target_column}' not found in data"
+                    logger.warning(
+                        "Could not find 'Fecha-O' or 'Fecha-I' columns. "
+                        "No 'delay' variable generated from time difference."
                     )
 
+                # Return features + target if present
+                if target_column in df_data.columns:
+                    target = pd.DataFrame(df_data[target_column]).copy()
+                    logger.info(f"Returning features + target '{target_column}'.")
+                    return features, target
+                else:
+                    raise ValueError(
+                        f"Target column '{target_column}' not found in data."
+                    )
+
+            # Otherwise, return just the features
+            logger.info("Returning features only (no target).")
             return features
 
         except Exception as e:
             logger.error(f"Error during preprocessing: {str(e)}")
             raise
 
-    def fit(self, features: pd.DataFrame, target: pd.DataFrame) -> None:
+    @staticmethod
+    def _compute_time_diff(row: pd.Series) -> float:
         """
-        Fit model with preprocessed data.
+        Compute the time difference in minutes between 'Fecha-O' and 'Fecha-I'.
 
         Args:
-            features (pd.DataFrame): Preprocessed features.
-            target (pd.DataFrame): Target values (delay column).
-        """
-        logger.info("Starting model fitting")
+            row (pd.Series): A row with 'Fecha-O' and 'Fecha-I'.
 
+        Returns:
+            float: The difference in minutes between Fecha-O and Fecha-I.
+        """
         try:
-            # Calculate class balance for weighting
-            n_y0 = len(target[target.iloc[:, 0] == 0])  # Number of non-delayed flights
-            n_y1 = len(target[target.iloc[:, 0] == 1])  # Number of delayed flights
+            fecha_o = datetime.strptime(row["Fecha-O"], "%Y-%m-%d %H:%M:%S")
+            fecha_i = datetime.strptime(row["Fecha-I"], "%Y-%m-%d %H:%M:%S")
+            return (fecha_o - fecha_i).total_seconds() / 60.0
+        except Exception as e:
+            logger.error(f"Failed to compute time diff for row: {e}")
+            return 0.0  # Or raise, depending on your preference
+
+    # -----------------------------------------------------------------
+    # Training
+    # -----------------------------------------------------------------
+    def fit(self, features: pd.DataFrame, target: pd.DataFrame) -> None:
+        """
+        Fit (train) an XGBoost model with preprocessed data.
+
+        Args:
+            features (pd.DataFrame): Input features (already one-hot encoded).
+            target (pd.DataFrame): Target values for each sample.
+        """
+        logger.info("Starting model fitting.")
+        try:
+            # Compute class imbalance ratio
+            n_y0 = sum(target.iloc[:, 0] == 0)
+            n_y1 = sum(target.iloc[:, 0] == 1)
 
             if n_y1 == 0:
-                logger.warning("No delayed flights in training data")
+                logger.warning("No delayed flights (class 1) in training data.")
                 scale = 1.0
             else:
-                scale = n_y0 / n_y1  # Weight for positive class
-                logger.info(f"Class imbalance ratio: {scale:.2f} (non-delayed/delayed)")
+                scale = n_y0 / n_y1
+                logger.info(f"Class imbalance ratio ~ {scale:.2f}")
 
-            # Initialize XGBoost classifier with balanced class weights
-            model_for_test = xgb.XGBClassifier(
+            # Preliminary classifier for evaluation
+            temp_model = xgb.XGBClassifier(
                 random_state=1, learning_rate=0.01, scale_pos_weight=scale
             )
 
-            # Perform train-test split for evaluation
+            # Train-test split for a quick local validation
             X_train, X_test, y_train, y_test = train_test_split(
                 features, target.values.ravel(), test_size=0.2, random_state=42
             )
 
             logger.info(
-                f"Training on {X_train.shape[0]} samples, evaluating on {X_test.shape[0]} samples"
+                f"Split data: {X_train.shape[0]} train samples, "
+                f"{X_test.shape[0]} test samples."
             )
 
-            # Train the model on the training split
-            model_for_test.fit(X_train, y_train)
-
-            # Evaluate the model on the test split
-            y_pred = model_for_test.predict(X_test)
+            temp_model.fit(X_train, y_train)
+            y_pred = temp_model.predict(X_test)
 
             # Log confusion matrix
             cm = confusion_matrix(y_test, y_pred)
             logger.info(f"Confusion Matrix:\n{cm}")
 
-            # Log classification report
-            report = classification_report(y_test, y_pred, output_dict=True)
+            # Classification report
+            report_dict = classification_report(y_test, y_pred, output_dict=True)
             logger.info("Classification Report:")
             logger.info(
-                f"Class 0 - Precision: {report['0']['precision']:.2f}, Recall: {report['0']['recall']:.2f}, F1: {report['0']['f1-score']:.2f}"
+                f"  Class 0 -> P: {report_dict['0']['precision']:.2f}, "
+                f"R: {report_dict['0']['recall']:.2f}, "
+                f"F1: {report_dict['0']['f1-score']:.2f}"
             )
             logger.info(
-                f"Class 1 - Precision: {report['1']['precision']:.2f}, Recall: {report['1']['recall']:.2f}, F1: {report['1']['f1-score']:.2f}"
+                f"  Class 1 -> P: {report_dict['1']['precision']:.2f}, "
+                f"R: {report_dict['1']['recall']:.2f}, "
+                f"F1: {report_dict['1']['f1-score']:.2f}"
             )
-            logger.info(f"Accuracy: {report['accuracy']:.2f}")
+            logger.info(f"  Accuracy: {report_dict['accuracy']:.2f}")
 
-            # Now train the final model on all data
-            logger.info("Training final model on complete dataset")
-            trained_model = xgb.XGBClassifier(
+            # Train final model on all data
+            final_model = xgb.XGBClassifier(
                 random_state=1, learning_rate=0.01, scale_pos_weight=scale
             )
-            trained_model.fit(features, target.values.ravel())
-
-            self._model = trained_model
-            logger.info("Model successfully trained")
-
-            # Store feature columns
+            final_model.fit(features, target.values.ravel())
+            self._model = final_model
             self._feature_cols = list(features.columns)
 
-            # Save the trained model
-            self.save_model(self.MODEL_PATH)
-            logging.info("Model training completed and saved.")
+            logger.info("Model successfully trained on the complete dataset.")
+            self.save_booster_as_json(self.JSON_MODEL_PATH)
+            logger.info(
+                f"Model training completed and saved at '{self.JSON_MODEL_PATH}'."
+            )
 
         except Exception as e:
             logger.error(f"Error during model fitting: {str(e)}")
             raise
 
+    # -----------------------------------------------------------------
+    # Prediction
+    # -----------------------------------------------------------------
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
         Predict delays for new flights.
@@ -208,52 +249,106 @@ class DelayModel:
             features (pd.DataFrame): Preprocessed features.
 
         Returns:
-            List[int]: Predicted targets (1 for delay, 0 for no delay).
-        """
-        logging.info("Starting prediction process")
+            List[int]: Predicted binary classes (1=delayed, 0=on time).
 
-        # Ensure model is trained or loaded
-        if self._model is None:
-            logging.warning("Model is not loaded. Attempting to load from disk...")
-            try:
-                self.load_model(self.MODEL_PATH)
-                logging.info("Model loaded successfully.")
-            except Exception as e:
-                logging.error(f"Model could not be loaded: {e}")
-                raise RuntimeError(
-                    "Model is not trained or cannot be loaded. Call `fit()` first."
+        Raises:
+            ValueError: If the model cannot be loaded or is not available.
+        """
+        logger.info("Starting prediction process.")
+        try:
+            # Ensure model is loaded
+            if self._model is None:
+                logger.warning("Model is not loaded; attempting to load from disk.")
+                try:
+                    self.load_booster_from_json(self.JSON_MODEL_PATH)
+
+                    # Verify model was successfully loaded
+                    if self._model is None:
+                        raise ValueError(
+                            "Failed to load model from disk. Please ensure the model file exists and is valid."
+                        )
+                except FileNotFoundError as fnf:
+                    logger.error(f"Model file not found: {fnf}")
+                    raise ValueError(
+                        f"Model file not found at '{self.JSON_MODEL_PATH}'. Please train the model first."
+                    ) from fnf
+                except Exception as e:
+                    logger.error(f"Error loading model: {e}")
+                    raise ValueError(f"Error loading model: {e}") from e
+
+            # Align columns - verify feature columns exist
+            if not self._feature_cols:
+                raise ValueError(
+                    "Feature column list is empty. Model metadata may be corrupted."
                 )
 
-        try:
-            # Ensure feature alignment
-            features = features.reindex(columns=self._feature_cols)
+            # Align columns
+            aligned_features = features.reindex(
+                columns=self._feature_cols, fill_value=0
+            )
 
             # Make predictions
-            predictions = self._model.predict(features)
-            return predictions.tolist()
+            preds = self._model.predict(aligned_features)
+            return preds.tolist()
 
         except Exception as e:
             logger.error(f"Error during prediction: {str(e)}")
             raise
 
-    def save_model(self, filepath: str) -> None:
+    # -----------------------------------------------------------------
+    # JSON Booster Save/Load for Portability
+    # -----------------------------------------------------------------
+    def save_booster_as_json(self, filepath: str = JSON_MODEL_PATH) -> None:
         """
-        Save the trained model to disk.
+        Save the booster from the trained XGBoost model in JSON format (portable).
 
         Args:
-            filepath (str): Path to save the model.
+            filepath (str): Path to JSON file. Default is `JSON_MODEL_PATH`.
         """
-        joblib.dump({"model": self._model, "features": self._feature_cols}, filepath)
-        logging.info(f"Model saved at {filepath}")
+        if not self._model:
+            logger.warning("No model to save as JSON.")
+            return
 
-    def load_model(self, filepath: str) -> None:
+        booster = self._model.get_booster()
+        booster.save_model(filepath)
+        logger.info(f"Booster saved in JSON format at '{filepath}'.")
+
+        # Save additional metadata (feature_cols, etc.) so you can reconstruct the classifier
+        metadata = {"features": self._feature_cols, "params": self._model.get_params()}
+        joblib.dump(metadata, filepath + ".metadata")
+        logger.info(f"Metadata saved at '{filepath}.metadata'.")
+
+    def load_booster_from_json(self, filepath: str = JSON_MODEL_PATH) -> None:
         """
-        Load a trained model from disk.
+        Load a booster from JSON and reconstruct an XGBClassifier.
 
         Args:
-            filepath (str): Path to load the model.
+            filepath (str): Path to the booster JSON file.
         """
-        model_data = joblib.load(filepath)
-        self._model = model_data["model"]
-        self._feature_cols = model_data["features"]
-        logging.info(f"Model loaded from {filepath}")
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"JSON file '{filepath}' does not exist.")
+
+        booster = xgb.Booster()
+        booster.load_model(filepath)
+        logger.info(f"Booster loaded from '{filepath}'.")
+
+        # Rebuild an XGBClassifier
+        xgb_clf = xgb.XGBClassifier()
+        xgb_clf._Booster = booster  # Attach the booster
+        logger.info("Reconstructed XGBClassifier from the loaded booster.")
+
+        # Load metadata to restore features and model params
+        if os.path.exists(filepath + ".metadata"):
+            metadata = joblib.load(filepath + ".metadata")
+            xgb_clf.set_params(**metadata["params"])
+            self._feature_cols = metadata["features"]
+            logger.info(
+                f"Restored classifier parameters and {len(self._feature_cols)} features."
+            )
+        else:
+            logger.warning(
+                "No metadata file found. Feature columns or params may be missing."
+            )
+
+        self._model = xgb_clf
+        logger.info("Model reconstruction from JSON complete.")
