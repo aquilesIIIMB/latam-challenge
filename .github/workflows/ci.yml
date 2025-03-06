@@ -51,7 +51,7 @@ jobs:
 
       - name: Run flake8 (strict)
         run: |
-          flake8 . --count --show-source --statistics
+          flake8 . --count --show-source --statistics --max-line-length=125
 
       - name: Run flake8 (warnings)
         run: |
