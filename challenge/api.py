@@ -106,20 +106,20 @@ def load_or_train_model():
     Loads a pre-trained model if available. Otherwise, trains it on sample data.
     """
     try:
-        if os.path.exists(model.MODEL_PATH):
-            model.load_booster_from_json(model.MODEL_PATH)
-            logger.info(f"Model loaded successfully from {model.MODEL_PATH}.")
+        if os.path.exists(model.JSON_MODEL_PATH):
+            model.load_booster_from_json(model.JSON_MODEL_PATH)
+            logger.info(f"Model loaded successfully from {model.JSON_MODEL_PATH}.")
         else:
             logger.warning(
                 "No pre-trained model found. Attempting to train from sample data."
             )
 
-            # Example: training from local CSV (adjust path to suit your environment)
+            # Training from local CSV (adjust path to suit your environment)
             sample_data_path = os.path.join(
                 os.path.dirname(__file__),
                 "..",
                 "data",
-                "data.csv",  # <--- Make sure this file exists in your Docker image or environment
+                "data.csv",
             )
 
             if not os.path.exists(sample_data_path):
