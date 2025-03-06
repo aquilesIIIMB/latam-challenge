@@ -3,7 +3,7 @@ name: 'Continuous Delivery'
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
   deploy:
@@ -42,11 +42,21 @@ jobs:
             --max-instances 10
 
       - name: Get service URL
+        id: get-url
         run: |
           SERVICE_URL=$(gcloud run services describe flight-delay-api --platform managed --region us-central1 --format='value(status.url)')
-          echo "Deployed service URL: $SERVICE_URL"
-          # Update the Makefile with the service URL for stress tests
-          sed -i "s|STRESS_URL = .*|STRESS_URL = ${SERVICE_URL}|g" Makefile
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          # Replace the STRESS_URL variable in the Makefile
+          sed -i "s|^STRESS_URL = .*|STRESS_URL = $SERVICE_URL|g" Makefile
+
+      # New step to install Python dependencies
+      - name: Install Dependencies for Stress Test
+        run: |
+          python -m pip install --upgrade pip
+          # Install requirements-test.txt (includes locust)
+          pip install -r requirements-test.txt
+          # And/or if your tests also need main requirements:
+          # pip install -r requirements.txt
 
       - name: Run stress tests
         run: make stress-test
